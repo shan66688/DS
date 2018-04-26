@@ -1,0 +1,11 @@
+---
+title: "P8106 Data Science II Final Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+#best group start here 
