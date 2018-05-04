@@ -32,6 +32,8 @@ library(e1071)
 #best group start here 
 
 ###1. data preparation.
+
+####1. Read raw data
 ```{r}
 # # read in raw data
 # drug_data = read.csv("../data/State_Drug_Utilization_Data_2015.csv")
@@ -44,40 +46,43 @@ library(e1071)
 # save(drug_data,drug_name,sunshine,acs2015,happy,physician, file="raw_data.Rdata")
 ```
 
+####2. Summarize acs2015 data by state, and save it as "acs_summary_by_state.Rdata".
 ```{r}
-#acs data summary by state
-acs2015_summary = acs2015 %>%
-  group_by(State) %>%
-  summarize(population = sum(TotalPop, na.rm = TRUE), 
-            men = sum(Men, na.rm = TRUE)/population,
-            women = sum(Women, na.rm = TRUE)/population,
-            hispanic = sum(0.01*Hispanic * TotalPop, na.rm = TRUE)/population,
-            white = sum(0.01*White * TotalPop, na.rm = TRUE)/population,
-            black = sum(0.01*Black * TotalPop, na.rm = TRUE)/population,
-            asian = sum(0.01*Asian * TotalPop, na.rm = TRUE)/population,
-            native = sum(0.01*Native * TotalPop, na.rm = TRUE)/population,
-            pacific = sum(0.01*Pacific * TotalPop, na.rm = TRUE)/population,
-            citizen = sum(Citizen, na.rm = TRUE)/population,
-            ave_income = sum(Income * TotalPop, na.rm = TRUE)/population,
-            income_per_cap = sum(as.numeric(IncomePerCap) * TotalPop, na.rm = TRUE)/population,
-            ave_Poverty = sum(Poverty * TotalPop, na.rm = TRUE)/population,
-            ave_ChildPoverty = sum(ChildPoverty * TotalPop, na.rm = TRUE)/population,
-            ave_Professional = sum(Professional * TotalPop, na.rm = TRUE)/population,
-            ave_Service = sum(Service * TotalPop, na.rm = TRUE)/population,
-            ave_Office = sum(Office * TotalPop, na.rm = TRUE)/population,
-            ave_Construction = sum(Construction * TotalPop, na.rm = TRUE)/population,
-            ave_Production = sum(Production * TotalPop, na.rm = TRUE)/population,
-            ave_Drive = sum(Drive * TotalPop, na.rm = TRUE)/population,
-            ave_Carpool = sum(Carpool * TotalPop, na.rm = TRUE)/population,
-            ave_Transit = sum(Transit * TotalPop, na.rm = TRUE)/population,
-            ave_Walk = sum(Walk * TotalPop, na.rm = TRUE)/population,
-            ave_WorkAtHome = sum(WorkAtHome * TotalPop, na.rm = TRUE)/population,
-            ave_MeanCommute = sum(MeanCommute * TotalPop, na.rm = TRUE)/population,
-            ave_SelfEmployed = sum(SelfEmployed * Employed, na.rm = TRUE)/sum(Employed),
-            ave_PublicWork = sum(PublicWork * Employed, na.rm = TRUE)/sum(Employed),
-            ave_PrivateWork = sum(PrivateWork * Employed, na.rm = TRUE)/sum(Employed),
-            ave_FamilyWork = sum(FamilyWork * Employed, na.rm = TRUE)/sum(Employed),
-            ave_Unemployment = sum(Unemployment * TotalPop, na.rm = TRUE)/population)
+# #acs data summary by state
+# acs2015_summary = acs2015 %>%
+#   group_by(State) %>%
+#   summarize(population = sum(TotalPop, na.rm = TRUE), 
+#             men = sum(Men, na.rm = TRUE)/population,
+#             women = sum(Women, na.rm = TRUE)/population,
+#             hispanic = sum(0.01*Hispanic * TotalPop, na.rm = TRUE)/population,
+#             white = sum(0.01*White * TotalPop, na.rm = TRUE)/population,
+#             black = sum(0.01*Black * TotalPop, na.rm = TRUE)/population,
+#             asian = sum(0.01*Asian * TotalPop, na.rm = TRUE)/population,
+#             native = sum(0.01*Native * TotalPop, na.rm = TRUE)/population,
+#             pacific = sum(0.01*Pacific * TotalPop, na.rm = TRUE)/population,
+#             citizen = sum(Citizen, na.rm = TRUE)/population,
+#             ave_income = sum(Income * TotalPop, na.rm = TRUE)/population,
+#             income_per_cap = sum(as.numeric(IncomePerCap) * TotalPop, na.rm = TRUE)/population,
+#             ave_Poverty = sum(Poverty * TotalPop, na.rm = TRUE)/population,
+#             ave_ChildPoverty = sum(ChildPoverty * TotalPop, na.rm = TRUE)/population,
+#             ave_Professional = sum(Professional * TotalPop, na.rm = TRUE)/population,
+#             ave_Service = sum(Service * TotalPop, na.rm = TRUE)/population,
+#             ave_Office = sum(Office * TotalPop, na.rm = TRUE)/population,
+#             ave_Construction = sum(Construction * TotalPop, na.rm = TRUE)/population,
+#             ave_Production = sum(Production * TotalPop, na.rm = TRUE)/population,
+#             ave_Drive = sum(Drive * TotalPop, na.rm = TRUE)/population,
+#             ave_Carpool = sum(Carpool * TotalPop, na.rm = TRUE)/population,
+#             ave_Transit = sum(Transit * TotalPop, na.rm = TRUE)/population,
+#             ave_Walk = sum(Walk * TotalPop, na.rm = TRUE)/population,
+#             ave_WorkAtHome = sum(WorkAtHome * TotalPop, na.rm = TRUE)/population,
+#             ave_MeanCommute = sum(MeanCommute * TotalPop, na.rm = TRUE)/population,
+#             ave_SelfEmployed = sum(SelfEmployed * Employed, na.rm = TRUE)/sum(Employed),
+#             ave_PublicWork = sum(PublicWork * Employed, na.rm = TRUE)/sum(Employed),
+#             ave_PrivateWork = sum(PrivateWork * Employed, na.rm = TRUE)/sum(Employed),
+#             ave_FamilyWork = sum(FamilyWork * Employed, na.rm = TRUE)/sum(Employed),
+#             ave_Unemployment = sum(Unemployment * TotalPop, na.rm = TRUE)/population)
+# 
+# save(acs2015_summary, file = "acs_summary_by_state.Rdata")
 ```
 
 
