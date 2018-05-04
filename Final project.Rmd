@@ -6,6 +6,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
+library(magrittr)
 library(knitr)
 library(readr)
 library(tidyverse)
@@ -32,17 +33,52 @@ library(e1071)
 
 ###1. data preparation.
 ```{r}
-# read in raw data
-drug_data = read.csv("../data/State_Drug_Utilization_Data_2015.csv")
-drug_name = read_xlsx("../data/anxiety drug names.xlsx")
-sunshine = read_xlsx("../data/sunshine duration by state.xlsx")
-acs2015 = read.csv("../data/acs2015_county_data.csv")
-happy_rank = c(28, 2, 9, 44, 10, 4, 18, 27, 12, 41, 1, 36, 35, 46, 14, 25, 49, 42, 22, 34, 30, 39, 7, 43, 45, 3, 20, 38, 21, 32, 16, 40, 23, 15, 47, 48, 31, 33, 26, 19, 6, 37, 11, 8, 29, 17, 24, 50, 13, 5)
-happy = data.frame(cbind(state.name, happy_rank))
-physician=read_xlsx("../data/physician.xlsx")
-save(drug_data,drug_name,sunshine,acs2015,happy,physician, file="raw_data.Rdata")
+# # read in raw data
+# drug_data = read.csv("../data/State_Drug_Utilization_Data_2015.csv")
+# drug_name = read_xlsx("../data/anxiety drug names.xlsx")
+# sunshine = read_xlsx("../data/sunshine duration by state.xlsx")
+# acs2015 = read.csv("../data/acs2015_county_data.csv")
+# happy_rank = c(28, 2, 9, 44, 10, 4, 18, 27, 12, 41, 1, 36, 35, 46, 14, 25, 49, 42, 22, 34, 30, 39, 7, 43, 45, 3, 20, 38, 21, 32, 16, 40, 23, 15, 47, 48, 31, 33, 26, 19, 6, 37, 11, 8, 29, 17, 24, 50, 13, 5)
+# happy = data.frame(cbind(state.name, happy_rank))
+# physician=read_xlsx("../data/physician.xlsx")
+# save(drug_data,drug_name,sunshine,acs2015,happy,physician, file="raw_data.Rdata")
 ```
 
+```{r}
+#acs data summary by state
+acs2015_summary = acs2015 %>%
+  group_by(State) %>%
+  summarize(population = sum(TotalPop, na.rm = TRUE), 
+            men = sum(Men, na.rm = TRUE)/population,
+            women = sum(Women, na.rm = TRUE)/population,
+            hispanic = sum(0.01*Hispanic * TotalPop, na.rm = TRUE)/population,
+            white = sum(0.01*White * TotalPop, na.rm = TRUE)/population,
+            black = sum(0.01*Black * TotalPop, na.rm = TRUE)/population,
+            asian = sum(0.01*Asian * TotalPop, na.rm = TRUE)/population,
+            native = sum(0.01*Native * TotalPop, na.rm = TRUE)/population,
+            pacific = sum(0.01*Pacific * TotalPop, na.rm = TRUE)/population,
+            citizen = sum(Citizen, na.rm = TRUE)/population,
+            ave_income = sum(Income * TotalPop, na.rm = TRUE)/population,
+            income_per_cap = sum(as.numeric(IncomePerCap) * TotalPop, na.rm = TRUE)/population,
+            ave_Poverty = sum(Poverty * TotalPop, na.rm = TRUE)/population,
+            ave_ChildPoverty = sum(ChildPoverty * TotalPop, na.rm = TRUE)/population,
+            ave_Professional = sum(Professional * TotalPop, na.rm = TRUE)/population,
+            ave_Service = sum(Service * TotalPop, na.rm = TRUE)/population,
+            ave_Office = sum(Office * TotalPop, na.rm = TRUE)/population,
+            ave_Construction = sum(Construction * TotalPop, na.rm = TRUE)/population,
+            ave_Production = sum(Production * TotalPop, na.rm = TRUE)/population,
+            ave_Drive = sum(Drive * TotalPop, na.rm = TRUE)/population,
+            ave_Carpool = sum(Carpool * TotalPop, na.rm = TRUE)/population,
+            ave_Transit = sum(Transit * TotalPop, na.rm = TRUE)/population,
+            ave_Walk = sum(Walk * TotalPop, na.rm = TRUE)/population,
+            ave_WorkAtHome = sum(WorkAtHome * TotalPop, na.rm = TRUE)/population,
+            ave_MeanCommute = sum(MeanCommute * TotalPop, na.rm = TRUE)/population,
+            ave_SelfEmployed = sum(SelfEmployed * Employed, na.rm = TRUE)/sum(Employed),
+            ave_PublicWork = sum(PublicWork * Employed, na.rm = TRUE)/sum(Employed),
+            ave_PrivateWork = sum(PrivateWork * Employed, na.rm = TRUE)/sum(Employed),
+            ave_FamilyWork = sum(FamilyWork * Employed, na.rm = TRUE)/sum(Employed),
+            ave_Unemployment = sum(Unemployment * TotalPop, na.rm = TRUE)/population)
+```
 
 
 
