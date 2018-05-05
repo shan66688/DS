@@ -25,6 +25,8 @@ library(randomForest)
 library(gbm)
 library(pander)
 library(e1071)
+library(tidytext)
+library(tools)
 ```
 
 ## R Markdown
@@ -85,6 +87,38 @@ library(e1071)
 # save(acs2015_summary, file = "acs_summary_by_state.Rdata")
 ```
 
+####3. Prepare the drug_name data: get all the names ready for "join" and save it as "drug name.Rdata".
+```{r}
+# drug_name_1 = drug_name %>%
+#   unnest_tokens(word, name) %>%
+#   unique()
+# 
+# data("stop_words")
+# drug_name_2 = anti_join(drug_name_1, stop_words) %>%
+#   mutate(word_upper = toupper(word), word_first_upper = toTitleCase(word)) %>%
+#   gather(type, Product.Name, 1:3) %>%
+#   select(Product.Name)
+# 
+# save(drug_name_2, file = "drug name.Rdata")
+```
+
+####4. Select anti-anxiety drug by merging drug_data with "drug name.Rdata"(drug_name_2), and summarize by state. The result is "anxiety drug by state.Rdata".
+```{r}
+# drug_data_anxiety_state = merge(drug_name_2, drug_data) %>%
+#   mutate(Units.Reimbursed = as.numeric(Units.Reimbursed),
+#          Number.of.Prescriptions = as.numeric(Number.of.Prescriptions),
+#          Total.Amount.Reimbursed = as.numeric(Total.Amount.Reimbursed),
+#          Medicaid.Amount.Reimbursed = as.numeric(Medicaid.Amount.Reimbursed)) %>%
+#   filter(Number.of.Prescriptions > 1) %>%
+#   mutate(Product.Name = toupper(Product.Name)) %>%
+#   group_by(State, Product.Name) %>%
+#   summarise(Rx.Number = sum((Number.of.Prescriptions), na.rm=TRUE),
+#             Reimburse.Unit = sum((Units.Reimbursed), na.rm=TRUE),
+#             Reimburse.Amount.Tot = sum((Total.Amount.Reimbursed), na.rm=TRUE),
+#             Reimburse.Amount.Medicaid = sum((Medicaid.Amount.Reimbursed), na.rm=TRUE))
+# 
+# save(drug_data_anxiety_state, file = "anxiety drug by state.Rdata")
+```
 
 
 
