@@ -27,6 +27,7 @@ library(pander)
 library(e1071)
 library(tidytext)
 library(tools)
+library(openintro)
 ```
 
 ## R Markdown
@@ -37,15 +38,17 @@ library(tools)
 
 ####1. Read raw data
 ```{r}
-# # read in raw data
-# drug_data = read.csv("../data/State_Drug_Utilization_Data_2015.csv")
-# drug_name = read_xlsx("../data/anxiety drug names.xlsx")
-# sunshine = read_xlsx("../data/sunshine duration by state.xlsx")
-# acs2015 = read.csv("../data/acs2015_county_data.csv")
-# happy_rank = c(28, 2, 9, 44, 10, 4, 18, 27, 12, 41, 1, 36, 35, 46, 14, 25, 49, 42, 22, 34, 30, 39, 7, 43, 45, 3, 20, 38, 21, 32, 16, 40, 23, 15, 47, 48, 31, 33, 26, 19, 6, 37, 11, 8, 29, 17, 24, 50, 13, 5)
-# happy = data.frame(cbind(state.name, happy_rank))
-# physician=read_xlsx("../data/physician.xlsx")
-# save(drug_data,drug_name,sunshine,acs2015,happy,physician, file="raw_data.Rdata")
+# read in raw data
+drug_data = read.csv("../data/State_Drug_Utilization_Data_2015.csv")
+drug_name = read_xlsx("../data/anxiety drug names.xlsx")
+sunshine = read_xlsx("../data/sunshine duration by state.xlsx")
+acs2015 = read.csv("../data/acs2015_county_data.csv")
+happy_rank = c(28, 2, 9, 44, 10, 4, 18, 27, 12, 41, 1, 36, 35, 46, 14, 25, 49, 42, 22, 34, 30, 39, 7, 43, 45, 3, 20, 38, 21, 32, 16, 40, 23, 15, 47, 48, 31, 33, 26, 19, 6, 37, 11, 8, 29, 17, 24, 50, 13, 5)
+happy = data.frame(cbind(state.name, happy_rank)) %>%
+  mutate(State = state.name) %>%
+  select(-state.name)
+physician=read_xlsx("../data/physician.xlsx")
+save(drug_data,drug_name,sunshine,acs2015,happy,physician, file="raw_data.Rdata")
 ```
 
 ####2. Summarize acs2015 data by state, and save it as "acs_summary_by_state.Rdata".
@@ -108,8 +111,9 @@ library(tools)
 #   mutate(Units.Reimbursed = as.numeric(Units.Reimbursed),
 #          Number.of.Prescriptions = as.numeric(Number.of.Prescriptions),
 #          Total.Amount.Reimbursed = as.numeric(Total.Amount.Reimbursed),
-#          Medicaid.Amount.Reimbursed = as.numeric(Medicaid.Amount.Reimbursed)) %>%
-#   filter(Number.of.Prescriptions > 1) %>%
+#          Medicaid.Amount.Reimbursed = as.numeric(Medicaid.Amount.Reimbursed),
+#          State = abbr2state(State)) %>%
+#   filter(Number.of.Prescriptions > 1, !is.na(State)) %>%
 #   mutate(Product.Name = toupper(Product.Name)) %>%
 #   group_by(State, Product.Name) %>%
 #   summarise(Rx.Number = sum((Number.of.Prescriptions), na.rm=TRUE),
@@ -120,17 +124,43 @@ library(tools)
 # save(drug_data_anxiety_state, file = "anxiety drug by state.Rdata")
 ```
 
+####5. Merge all data sets by state, and save as "data.Rdata", which is our final data set for now.
+```{r}
+# geo_center = data.frame(cbind(state.name, state.center$x, state.center$y))
+# colnames(geo_center)<-(c("State", "longitude", "latitude"))
+# 
+# data = Reduce(function(x, y) merge(x, y, all=TRUE), list(acs2015_summary, drug_data_anxiety_state, happy, physician, sunshine, geo_center)) 
+# 
+# save(data, file = "data.Rdata")
+```
+
+Description of "data" variables:
+"State": 50 states plus DC.
+"population": Total population in the state.
+"men" and "women": Proportion of men or women in the population. They add up to 1.
+"hispanic", "white", "black", "asian", "native", and "pacific": Proportion of each race in the population. They add up to 1.
+"citizen": Proportion of citizen.
+"ave_income": Average annual income of each employee.
+"income_per_cap": Average annual income per capita.
+"ave_Poverty": average poverty
+"ave_ChildPoverty": average child poverty
+"ave_Professional", "ave_Service", "ave_Office", "ave_Construction", "ave_Production": Percetage of employee working in a specific career. They add up to 100.
+"ave_Drive", "ave_Carpool", "ave_Transit", "ave_Walk": Percetage of people taking a specific commuting method. They add up to 100.
+"ave_MeanCommute": I am not quite sure. Probably the commuting time in minutes?
+"ave_SelfEmployed", "ave_PublicWork", "ave_PrivateWork", "ave_FamilyWork": Percetage of people with a specific employment status. They add up to 100.
+"ave_Unemployment": Unemployment rate.
+"Product.Name": Name of the drug
+"Rx number": number of prescriptions.
+"Reimburse.Unit": No idea...
+"Reimburse.Amount.Tot": Total amount of reimbursment for a drug.
+"Reimburse.Amount.Medicaid": Total amount of reimbursment by Medicaid for a drug.
+"happy_rank": The rank of happiness of the state among all 50 states.
+"physician per 100,000 population": Licensed, active physician per 100,000 population.
+"Place", "% Sun", "Total hours", "Clear days": These are for the sunshine data. "Place" is where the following three measurements were taken.
+"Longitude" and "Latitude": The coordinates of the geometric center of each state.
 
 
-
-
-
-
-
-
-
-
-
+We probably will use "Rx number", "Reimburse.Amount.Tot", or "Reimburse.Amount.Medicaid" as the reponse, and the other variables as the predictors.
 
 
 
