@@ -177,6 +177,8 @@ We probably will use "Rx number", "Reimburse.Amount.Tot", or "Reimburse.Amount.M
 
 ####1. heirachical clustering
 ```{r}
+load(data.Rdata)
+
 data_cluster = data_final %>%
   ungroup() %>%
   clean_names() %>%
