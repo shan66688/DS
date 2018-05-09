@@ -29,6 +29,9 @@ library(tidytext)
 library(tools)
 library(openintro)
 library(janitor)
+library(glmnet)
+library(pls)
+library(gam)
 ```
 
 ## R Markdown
@@ -172,27 +175,238 @@ We probably will use "Rx number", "Reimburse.Amount.Tot", or "Reimburse.Amount.M
 
 ###3. Unsupervised learning.
 
-heirachical clustering
+####1. heirachical clustering
 ```{r}
-row.names(data_final) = data_final$State
 data_cluster = data_final %>%
   ungroup() %>%
   clean_names() %>%
+  select(-state, -place, -percent_sun, -total_hours, -population, -sum_reimburse, -longitude, -latitude)
+
+data_cluster <- data.frame(lapply(data_cluster, function(x) as.numeric(x)))
+
+data_cluster = scale(data_cluster)
+
+row.names(data_cluster) = state.name
+
+hc.complete <- hclust(dist(data_cluster), method = "complete")
+plot(hc.complete,main = "Complete Linkage", xlab = "", sub = "", cex = .9)
+rect.hclust(hc.complete, h = 9.5)
+```
+
+####2. PCA analysis
+```{r}
+data_pca = data_final %>%
+  ungroup() %>%
+  clean_names() %>%
   select(-state, -place, -percent_sun, -total_hours, -population, -sum_reimburse)
+
+data_pca <- data.frame(lapply(data_pca, function(x) as.numeric(as.character(x))))
+
+pr.out <- prcomp(data_pca, scale = TRUE)
+plot(pr.out$"x"[,1],pr.out$"x"[,2],xlab="PC1",ylab="PC2")
+```
+
+###4. Supervised learning.
+
+1. Split data into train and test datasets.
+```{r}
+data_regression = data_final %>%
+  ungroup() %>%
+  clean_names() %>%
+  select(-state, -place, -percent_sun, -total_hours, -population, -sum_reimburse)
+
+data_regression <- data.frame(lapply(data_regression, function(x) as.numeric(as.character(x))))
+
+row.names(data_cluster) = state.name
+
+set.seed(2018)
+train_row = sample(1:50, 30)
+train = data_regression[train_row, ]
+test = data_regression[-train_row, ]
+```
+
+2. Linear regression
+```{r}
+linear <- lm(reimburse_per_cap~., data = train)
+summary(linear)
+```
+
+3. ridge regression
+
+(1). Fit ridge regression models with different $\lambda$s.
+```{r}
+# matrix of predictors
+x_ridge = model.matrix(reimburse_per_cap~.,train)[,-1]
+# vector of response
+y_ridge = train$reimburse_per_cap
+
+# ridge regression
+# set a grid for lambda
+grid.ridge <- 10^seq(10,-5,length=100)
+# fit the ridge regression (alpha = 0) with a sequence of lambdas
+# glmnet() function standardizes the variables by default
+ridge = glmnet(x_ridge,y_ridge,alpha=0,lambda = grid.ridge)
+
+# coefficent matrix for different values of lambda in your grid
+# each column is the fit corresponding to one lambda value
+#coef(ridge)
+#dim(coef(ridge))
+```
+
+(2). Cross-validation (10-fold) to identify the $\lambda$ that returned the lowest MSE.
+```{r}
+set.seed(2018)
+
+# Cross-validation for ridge regression
+cv.out_ridge = cv.glmnet(x_ridge,y_ridge,alpha=0, lambda = grid.ridge,
+                   type.measure = "mse")
+
+# two vertical lines for minimal MSE and 1SE rule
+plot(cv.out_ridge)
+
+# final coefficents
+best.lambda_ridge <- cv.out_ridge$lambda.min
+best_ridge_coef = predict(ridge, s=best.lambda_ridge, type="coefficients")
+```
+
+The chosen $\lambda$ is `r best.lambda_ridge`, and the corresponding ridge regression coefficients are
+```{r}
+best_ridge_coef
+```
+
+(3). Calculate test MSE with the test data.
+```{r}
+# predict the new obesrvations from test data
+x_test_ridge = model.matrix(reimburse_per_cap~.,test)[,-1]
+ridge_pred <- predict(ridge, s=best.lambda_ridge, newx = x_test_ridge)
+# test set error
+MSE_test_ridge = mean((ridge_pred - test$reimburse_per_cap)^2)
+MSE_test_ridge
+```
+
+The test MSE is `r MSE_test_ridge`.
+
+4. Lasso regression
+
+(1) Fit lasso regression models with different $\lambda$s.
+```{r}
+# matrix of predictors
+x_lasso = model.matrix(reimburse_per_cap~.,train)[,-1]
+# vector of response
+y_lasso = train$reimburse_per_cap
+
+# lasso regression
+# set a grid for lambda
+grid.lasso <- exp(seq(10,-2,length=100))
+# fit the lasso regression (alpha = 1) with a sequence of lambdas
+# glmnet() function standardizes the variables by default
+lasso = glmnet(x_lasso,y_lasso,alpha=1,lambda = grid.lasso)
+
+# coefficent matrix for different values of lambda in your grid
+# each column is the fit corresponding to one lambda value
+#coef(lasso)
+#dim(coef(lasso))
+```
+
+(2) Cross-validation (10-fold) to identify the $\lambda$ that returned the lowest MSE.
+```{r}
+# Cross-validation for ridge regression
+cv.out_lasso = cv.glmnet(x_lasso,y_lasso,alpha=1, lambda = grid.lasso,
+                   type.measure = "mse")
+
+# two vertical lines for minimal MSE and 1SE rule
+plot(cv.out_lasso)
+
+# final coefficents
+best.lambda_lasso <- cv.out_lasso$lambda.min
+best_lasso_coef = predict(lasso, s=best.lambda_lasso, type="coefficients")
+```
+
+The chosen $\lambda$ is `r best.lambda_lasso`, and the corresponding lasso regression coefficients are
+```{r}
+best_lasso_coef
+```
+
+(3). Calculate test MSE with the test data.
+```{r}
+# predict the new obesrvations from test data
+x_test_lasso = model.matrix(reimburse_per_cap~.,test)[,-1]
+lasso_pred <- predict(lasso, s = best.lambda_lasso, newx = x_test_lasso)
+# test set error
+MSE_test_lasso = mean((lasso_pred - test$reimburse_per_cap)^2)
+MSE_test_lasso
+```
+
+The test MSE is `r MSE_test_lasso`.
+
+(4). Calculate the number or non-zero coefficients
+```{r}
+n_nonzero = sum(best_lasso_coef != 0 )
+n_nonzero
+```
+
+So the number or non-zero coefficients is `r n_nonzero`.
+
+4.1 gam with the nonzero predictors in lasso model:
+```{r, warning=FALSE}
+gam=gam(reimburse_per_cap~s(citizen,6)+s(ave_service,6)+s(ave_construction,6)+s(ave_transit,6)+s(ave_walk,6)+s(ave_public_work,6)+s(physician_per_100_000_population,6) ,data=train)
+
+par(mfrow=c(2,4))
+plot(gam,col="blue")
+
+gam_pred <- predict(gam, newx = test)
+MSE_test_gam = mean((gam_pred - test$reimburse_per_cap)^2)
+MSE_test_gam
 ```
 
 
+5. PLS regression
+
+(1) Fit pls regression models with the different M's chosen by 10-fold cross-validation.
+```{r}
+pls = plsr(reimburse_per_cap~., 
+               data=train, 
+               scale=TRUE,  
+               validation ="CV")
+summary(pls)
+```
+
+(2) Find the M that returns the best fitting result.
+```{r}
+validationplot(pls,val.type = "MSEP")
+ncomp = selectNcomp(pls, method = c("onesigma"))
+ncomp
+```
+Thus, the value of M selected by cross-validation is `r ncomp`.
+
+(3) Calculate test MSE with the test data.
+```{r}
+pls_pred = predict(pls,test,ncomp = ncomp)
+MSE_test_pls = mean((pls_pred - test$reimburse_per_cap)^2)
+MSE_test_pls
+```
+The test MSE is `r MSE_test_pls`.
+
+6.PCR regression
+```{r}
+pcr_model <- pcr(reimburse_per_cap~., data = train, scale = TRUE, validation = "CV")
+summary(pcr_model)
+
+validationplot(pcr_model, val.type="MSEP")
+#from the above plot, we choose ncomp to be 5.
+pcr_pred = predict(pcr_model,test,ncomp = 5)
+MSE_test_pcr = mean((pcr_pred - test$reimburse_per_cap)^2)
+MSE_test_pcr
+```
+The test MSE is `r MSE_test_pcr`.
 
 
-
-
-
-
-
-
-
-
-
+```{r}
+MSE=matrix(c(MSE_test_ridge,MSE_test_lasso, MSE_test_gam, MSE_test_pls, MSE_test_pcr))
+rownames(MSE) <- c("ridge","lasso","gam","pls", "pcr")
+colnames(MSE) = "test MSE"
+MSE
+```
 
 
 
