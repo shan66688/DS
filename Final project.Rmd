@@ -28,6 +28,7 @@ library(e1071)
 library(tidytext)
 library(tools)
 library(openintro)
+library(janitor)
 ```
 
 ## R Markdown
@@ -131,9 +132,9 @@ library(openintro)
 # 
 # data = Reduce(function(x, y) merge(x, y, all=TRUE), list(acs2015_summary, drug_data_anxiety_state, happy, physician, sunshine, geo_center))
 # 
-# data_final = data %>% 
+# data_final = data %>%
 #   group_by(State) %>%
-#   mutate(sum_reimburse = sum(Reimburse.Amount.Tot)) %>%
+#   mutate(sum_reimburse = sum(Reimburse.Amount.Tot), reimburse_per_cap = sum_reimburse/population) %>%
 #   select(-Product.Name, -Rx.Number, -Reimburse.Unit, -Reimburse.Amount.Tot, -Reimburse.Amount.Medicaid) %>%
 #   distinct() %>%
 #   na.omit()
@@ -168,6 +169,39 @@ Description of "data" variables:
 "sum_reimburse": total number of reimburesement of anti_anxiety drugs.
 
 We probably will use "Rx number", "Reimburse.Amount.Tot", or "Reimburse.Amount.Medicaid" as the reponse, and the other variables as the predictors.
+
+###3. Unsupervised learning.
+
+heirachical clustering
+```{r}
+row.names(data_final) = data_final$State
+data_cluster = data_final %>%
+  ungroup() %>%
+  clean_names() %>%
+  select(-state, -place, -percent_sun, -total_hours, -population, -sum_reimburse)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
