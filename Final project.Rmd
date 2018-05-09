@@ -129,9 +129,16 @@ library(openintro)
 # geo_center = data.frame(cbind(state.name, state.center$x, state.center$y))
 # colnames(geo_center)<-(c("State", "longitude", "latitude"))
 # 
-# data = Reduce(function(x, y) merge(x, y, all=TRUE), list(acs2015_summary, drug_data_anxiety_state, happy, physician, sunshine, geo_center)) 
+# data = Reduce(function(x, y) merge(x, y, all=TRUE), list(acs2015_summary, drug_data_anxiety_state, happy, physician, sunshine, geo_center))
 # 
-# save(data, file = "data.Rdata")
+# data_final = data %>% 
+#   group_by(State) %>%
+#   mutate(sum_reimburse = sum(Reimburse.Amount.Tot)) %>%
+#   select(-Product.Name, -Rx.Number, -Reimburse.Unit, -Reimburse.Amount.Tot, -Reimburse.Amount.Medicaid) %>%
+#   distinct() %>%
+#   na.omit()
+# 
+# save(data_final, file = "data.Rdata")
 ```
 
 Description of "data" variables:
@@ -149,16 +156,16 @@ Description of "data" variables:
 "ave_MeanCommute": I am not quite sure. Probably the commuting time in minutes?
 "ave_SelfEmployed", "ave_PublicWork", "ave_PrivateWork", "ave_FamilyWork": Percetage of people with a specific employment status. They add up to 100.
 "ave_Unemployment": Unemployment rate.
-"Product.Name": Name of the drug
-"Rx number": number of prescriptions.
-"Reimburse.Unit": No idea...
-"Reimburse.Amount.Tot": Total amount of reimbursment for a drug.
-"Reimburse.Amount.Medicaid": Total amount of reimbursment by Medicaid for a drug.
+("Product.Name": Name of the drug)
+("Rx number": number of prescriptions.)
+("Reimburse.Unit": No idea...)
+("Reimburse.Amount.Tot": Total amount of reimbursment for a drug.)
+("Reimburse.Amount.Medicaid": Total amount of reimbursment by Medicaid for a drug.)
 "happy_rank": The rank of happiness of the state among all 50 states.
 "physician per 100,000 population": Licensed, active physician per 100,000 population.
 "Place", "% Sun", "Total hours", "Clear days": These are for the sunshine data. "Place" is where the following three measurements were taken.
 "Longitude" and "Latitude": The coordinates of the geometric center of each state.
-
+"sum_reimburse": total number of reimburesement of anti_anxiety drugs.
 
 We probably will use "Rx number", "Reimburse.Amount.Tot", or "Reimburse.Amount.Medicaid" as the reponse, and the other variables as the predictors.
 
