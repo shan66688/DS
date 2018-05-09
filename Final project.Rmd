@@ -208,6 +208,14 @@ pr.out <- prcomp(data_pca, scale = TRUE)
 plot(pr.out$"x"[,1],pr.out$"x"[,2],xlab="PC1",ylab="PC2")
 ```
 
+####3. Descriptive Analysis
+```{r}
+library(ggplot2)
+library(GGally)
+data_final_pairwise <- select(data_final, starts_with("ave"))
+ggpairs(data_final_pairwise[,2:20])
+```
+
 ###4. Supervised learning.
 
 1. Split data into train and test datasets.
@@ -229,9 +237,23 @@ test = data_regression[-train_row, ]
 
 2. Linear regression
 ```{r}
-linear <- lm(reimburse_per_cap~., data = train)
+linear <- lm(reimburse_per_cap ~., data = train)
 summary(linear)
+library(olsrr)
+ols_step_forward_p(linear)
+linear_new <- lm(reimburse_per_cap ~ physician_per_100_000_population + citizen + ave_private_work + ave_service + ave_family_work + ave_mean_commute + longitude + clear_days + ave_construction + ave_production + income_per_cap + ave_walk + ave_drive + ave_carpool, data = train)
+summary(linear_new)
+plot(linear_new)
+library(gvlma)
+gvmodel <- gvlma(linear_new)
+summary(gvmodel)
+
+linear_pred <- predict(linear_new, test)
+MSE_test_linear = mean((linear_pred - test$reimburse_per_cap)^2)
+MSE_test_linear
 ```
+The test error is `r MSE_test_linear`.
+
 
 3. ridge regression
 
@@ -404,9 +426,9 @@ The test MSE is `r MSE_test_pcr`.
 
 
 ```{r}
-MSE=matrix(c(MSE_test_ridge,MSE_test_lasso, MSE_test_gam, MSE_test_pls, MSE_test_pcr))
-rownames(MSE) <- c("ridge","lasso","gam","pls", "pcr")
-colnames(MSE) = "test MSE"
+MSE=matrix(c(MSE_test_linear,MSE_test_ridge,MSE_test_lasso, MSE_test_gam, MSE_test_pls, MSE_test_pcr))
+rownames(MSE) <- c("Linear","Ridge","Lasso","Gam","Pls", "Pcr")
+colnames(MSE) = "Test MSE"
 MSE
 ```
 
